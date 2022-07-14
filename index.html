@@ -23,27 +23,28 @@
 
 				<div class="input-group mb-3">
 					<span class="input-group-text">Travel Distance</span>
-					<input type="text" class="form-control" aria-label="Amount (to the nearest dollar)"
+					<input type="number" class="form-control" aria-label="Amount (to the nearest dollar)"
 						v-model.number="km">
 					<span class="input-group-text">km</span>
 				</div>
 
-				<p>Estimated Cost: <strong>{{ fuel_cost.toFixed(2) }}</strong></p>
-
+				<div class="text-center py-4">
+				<h3 class="display-5">Estimated Cost: {{ fuel_cost.toFixed(2) }}</h3>
+				</div>
 				<hr>
 
 				<p>The calculation above is based on the following figures:</p>
 
 				<div class="input-group mb-3">
 				<span class="input-group-text">Fuel Economy</span>
-				<input type="text" class="form-control" aria-label="Amount (to the nearest dollar)"
+				<input type="number" class="form-control" aria-label="Amount (to the nearest dollar)"
 					v-model.number="kmpl_drive">
 				<span class="input-group-text">km per liter</span>
 				</div>
 
 				<div class="input-group mb-3">
 				<span class="input-group-text">Fuel Cost</span>
-				<input type="text" class="form-control" aria-label="Amount (to the nearest dollar)"
+				<input type="number" class="form-control" aria-label="Amount (to the nearest dollar)"
 					v-model.number="cost_per_liter">
 				<span class="input-group-text">per liter</span>
 				</div>
