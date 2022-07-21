@@ -1,79 +1,148 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-	<meta charset="utf-8">
-	<title>Transport Calculator</title>
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet"
-		integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
+  <meta charset="utf-8">
+  <title>Transport Calculator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-gH2yIJqKdNHPEq0n4Mqa/HGKIhSkIHeL5AyhkYV8i59U5AR6csBvApHHNl/vI1Bx" crossorigin="anonymous">
 
-	<head>
+</head>
 
-	<body>
-		<div class="container">
+<body>
+<div class="container" style="max-width: 700px">
 
-			<div class="text-center p-3">
-				<h1 class="display-2">Should I Drive?</h1>
-			</div>
-
-
-
-			<div id="app">
-
-				<div class="input-group mb-3">
-					<span class="input-group-text">Travel Distance</span>
-					<input type="number" class="form-control" aria-label="Amount (to the nearest dollar)"
-						v-model.number="km">
-					<span class="input-group-text">km</span>
-				</div>
-
-				<div class="text-center py-4">
-				<h3 class="display-5">Estimated Cost: {{ fuel_cost.toFixed(2) }}</h3>
-				</div>
-				<hr>
-
-				<p>The calculation above is based on the following figures:</p>
-
-				<div class="input-group mb-3">
-				<span class="input-group-text">Fuel Economy</span>
-				<input type="number" class="form-control"
-					v-model.number="kmpl_drive">
-				<span class="input-group-text">km per liter</span>
-				</div>
-
-				<div class="input-group mb-3">
-				<span class="input-group-text">Fuel Cost</span>
-				<input type="number" class="form-control"
-					v-model.number="cost_per_liter">
-				<span class="input-group-text">per liter</span>
-				</div>
-
-			</div>
-		</div>
+  <div class="text-center p-3">
+    <h1 class="display-2">Should I Drive?</h1>
+  </div>
 
 
-		<script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
-		<script>
+  <div id="app">
+
+    <div class="input-group mb-3">
+      <span class="input-group-text">Travel Distance</span>
+      <input type="number" class="form-control"
+             v-model.number="km">
+      <span class="input-group-text">km</span>
+    </div>
+    <p><small class="text-muted">Enter driving distance directly in the form above or use the form below to
+      calculate.</small></p>
+
+    <div class="row">
+      <div class="col"><input v-model="fromQuery" type="text" class="form-control" placeholder="From"></div>
+      <div class="col"><input v-model="toQuery" type="text" class="form-control" placeholder="To"></div>
+      <div class="col">
+        <button class="btn btn-secondary" @click="calculate" :disabled="loading">Calculate</button>
+      </div>
+    </div>
+
+    <div v-if="loading" class="alert alert-secondary mt-3" role="alert">
+      Calculating distance...
+    </div>
 
 
-			const app = new Vue({
-				el: '#app',
-				data: {
-					km: 100,
-					kmpl_drive: 13,
-					cost_per_liter: 24.3,
-				},
-				computed: {
-					liters_consumed() {
-						return this.km / this.kmpl_drive
-					},
-					fuel_cost() {
-						return this.liters_consumed * this.cost_per_liter
-					}
-				}
-			})
-		</script>
-	</body>
+    <div class="text-center py-4">
+      <h3 class="display-5">Estimated Cost: {{ total_cost.toFixed(2) }}</h3>
+    </div>
+    <hr>
+
+    <p>The calculation above is based on the following figures:</p>
+
+    <div class="input-group mb-3">
+      <span class="input-group-text">Fuel Economy</span>
+      <input type="number" class="form-control"
+             v-model.number="kmpl_drive">
+      <span class="input-group-text">km per liter</span>
+    </div>
+
+    <div class="input-group mb-3">
+      <span class="input-group-text">Fuel Cost</span>
+      <input type="number" class="form-control"
+             v-model.number="cost_per_liter">
+      <span class="input-group-text">per liter</span>
+    </div>
+
+    <div class="input-group mb-3">
+      <span class="input-group-text">Running Cost</span>
+      <input type="number" class="form-control"
+             v-model.number="running_cost">
+      <span class="input-group-text">per km</span>
+    </div>
+
+    <div class="input-group mb-3">
+      <span class="input-group-text">Additional Cost</span>
+      <input type="number" class="form-control"
+             v-model.number="additional">
+    </div>
+    <p><small class="text-muted">Additional costs are road tolls, parking fees etc. All amounts should be entered in your local currency.</small></p>
+  </div>
+</div>
+
+<script src="https://unpkg.com/vue@3"></script>
+
+<script>
+
+
+  const app = Vue.createApp({
+    data() {
+      return {
+        km: 100,
+        kmpl_drive: 13,
+        cost_per_liter: 24.3,
+        running_cost: 0,
+        routing: null, // the api response
+        fromQuery: "",
+        toQuery: "",
+        loading: false,
+        additional: 0,
+      }
+    },
+    computed: {
+      liters_consumed() {
+        return this.km / this.kmpl_drive
+      },
+      total_cost() {
+        return (this.liters_consumed * this.cost_per_liter) + this.additional + (this.km * this.running_cost)
+      },
+    },
+    methods: {
+      geocode(s) {
+        return new Promise((resolve) => {
+          const q = encodeURIComponent(s)
+          const url = `https://nominatim.openstreetmap.org/search?q=${q}&format=json`
+          fetch(url).then(resp => resp.json()).then(data => {
+            const result = data[0]
+            resolve(`${result.lon},${result.lat}`)
+          })
+        })
+      },
+      calculate() {
+        this.loading = true
+        Promise.all([this.geocode(this.fromQuery), this.geocode(this.toQuery)]).then(values => {
+          const [f, t] = values
+          const url = `https://routing.openstreetmap.de/routed-car/route/v1/driving/${f};${t}`
+          fetch(url).then(resp => resp.json()).then(data => {
+            this.routing = data
+            if (data.code !== 'Ok') return
+            this.km = data.routes[0].legs[0].distance / 1000
+            this.loading = false
+          }).catch(err => {
+            console.error(err)
+            this.loading = false
+          })
+        }).catch(err => {
+          console.error(err)
+          this.loading = false
+        })
+
+
+      }
+    }
+  })
+
+  app.mount('#app')
+</script>
+</body>
 
 </html>
