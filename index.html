@@ -12,7 +12,7 @@
 </head>
 
 <body>
-<div class="container" style="max-width: 700px">
+<div class="container">
 
   <div class="text-center p-3">
     <h1 class="display-2">Should I Drive?</h1>
@@ -31,9 +31,11 @@
       calculate.</small></p>
 
     <div class="row">
-      <div class="col"><input v-model="fromQuery" type="text" class="form-control" placeholder="From"></div>
-      <div class="col"><input v-model="toQuery" type="text" class="form-control" placeholder="To"></div>
-      <div class="col">
+      <div class="col-sm-12 col-md-4"><input v-model="fromQuery" type="text" class="form-control" placeholder="From">
+      </div>
+      <div class="col-sm-12 col-md-4 mt-md-0 mt-2"><input v-model="toQuery" type="text" class="form-control"
+                                                          placeholder="To"></div>
+      <div class="col-sm-12 col-md-4 mt-md-0 mt-2">
         <button class="btn btn-secondary" @click="calculate" :disabled="loading">Get Distance</button>
       </div>
     </div>
@@ -44,17 +46,26 @@
 
 
     <div class="text-center py-4">
-      <h3 class="display-5">Estimated Cost: {{ total_cost.toFixed(2) }}</h3>
+      <h3 class="display-5">Estimated Cost: {{ total_cost_display }}</h3>
     </div>
     <hr>
 
     <p>The calculation above is based on the following figures:</p>
 
     <div class="input-group mb-3">
+
       <span class="input-group-text">Fuel Economy</span>
-      <input type="number" class="form-control"
-             v-model.number="kmpl_drive">
-      <span class="input-group-text">km per liter</span>
+
+      <template v-if="economyFormat === 'kmpl'">
+        <input type="number" class="form-control"
+               v-model.number="kmpl">
+        <span class="input-group-text">km per liter</span>
+      </template>
+      <template v-if="economyFormat === 'lpkm'">
+        <input type="number" class="form-control"
+               v-model.number="lpkm">
+        <span class="input-group-text">liter per 100km</span>
+      </template>
     </div>
 
     <div class="input-group mb-3">
@@ -76,12 +87,36 @@
       <input type="number" class="form-control"
              v-model.number="additional">
     </div>
-    <p><small class="text-muted">Additional costs are road tolls, parking fees etc. All amounts should be entered in your local currency.</small></p>
+    <p><small class="text-muted">Additional costs are road tolls, parking fees etc. All amounts should be entered in
+      your local currency.</small></p>
+
+    <hr>
+    <p>Display Options</p>
+
+    <div class="row">
+      <div class="col-sm-12 col-md-6">
+        <label for="currency-select" class="form-label">Currency</label>
+        <select class="form-select" id="currency-select" v-model="currency">
+          <option value="ZAR">ZAR</option>
+          <option value="SEK">SEK</option>
+          <option value="USD">USD</option>
+          <option value="EUR">EUR</option>
+        </select>
+      </div>
+      <div class="col-sm-12 col-md-6 mt-2 mt-md-0">
+        <label for="economy-format-select" class="form-label">Fuel Economy</label>
+        <select class="form-select" id="economy-format-select" v-model="economyFormat">
+          <option value="kmpl">km / liter</option>
+          <option value="lpkm">liter / 100km</option>
+        </select>
+      </div>
+    </div>
   </div>
 </div>
 
 <div class="container-fluid py-3 bg-light text-center mt-5">
-  <p class="m-0">Another efficient solution by Hartebees Ventures. Looking for a solution for your business? Get in touch: <a href="mailto:info@hartebees.co.za">info@hartebees.co.za</a></p>
+  <p class="m-0">Another efficient solution by Hartebees Ventures. Looking for a solution for your business? Get in
+    touch: <a href="mailto:info@hartebees.co.za">info@hartebees.co.za</a></p>
 </div>
 
 <script src="https://unpkg.com/vue@3"></script>
@@ -92,7 +127,8 @@
     data() {
       return {
         km: 100,
-        kmpl_drive: 13,
+        kmpl: 13,
+        lpkm: 6.5,
         cost_per_liter: 24.3,
         running_cost: 0,
         routing: null, // the api response
@@ -100,15 +136,26 @@
         toQuery: "",
         loading: false,
         additional: 0,
+        currency: 'ZAR',
+        economyFormat: 'kmpl',
       }
     },
     computed: {
+      economy() {
+        // returns km/l fuel usage
+        if (this.economyFormat === 'kmpl') return this.kmpl
+        if (this.economyFormat === 'lpkm') return 100 / this.lpkm
+      },
       liters_consumed() {
-        return this.km / this.kmpl_drive
+        return this.km / this.economy
       },
       total_cost() {
         return (this.liters_consumed * this.cost_per_liter) + this.additional + (this.km * this.running_cost)
       },
+      total_cost_display() {
+        if (!this.currency) return this.total_cost.toFixed(2)
+        return (new Intl.NumberFormat('en-GB', {style: 'currency', currency: this.currency})).format(this.total_cost)
+      }
     },
     methods: {
       geocode(s) {
