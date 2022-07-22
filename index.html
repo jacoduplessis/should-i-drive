@@ -176,7 +176,7 @@
           fetch(url).then(resp => resp.json()).then(data => {
             this.routing = data
             if (data.code === 'Ok') {
-              this.km = data.routes[0].legs[0].distance / 1000
+              this.km = Math.round(data.routes[0].legs[0].distance / 1000)
             }
             this.loading = false
           }).catch(err => {
