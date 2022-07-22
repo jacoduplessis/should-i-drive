@@ -45,10 +45,9 @@
     </div>
 
 
-    <div class="text-center py-4">
-      <h3 class="display-5">Estimated Cost: {{ total_cost_display }}</h3>
+    <div class="text-center py-5">
+      <h3 class="display-6">Estimated Cost: {{ total_cost_display }}</h3>
     </div>
-    <hr>
 
     <p>The calculation above is based on the following figures:</p>
 
@@ -71,21 +70,21 @@
     <div class="input-group mb-3">
       <span class="input-group-text">Fuel Cost</span>
       <input type="number" class="form-control"
-             v-model.number="cost_per_liter">
+             v-model.number="costPerLiter">
       <span class="input-group-text">per liter</span>
     </div>
 
     <div class="input-group mb-3">
       <span class="input-group-text">Running Cost</span>
       <input type="number" class="form-control"
-             v-model.number="running_cost">
+             v-model.number="runningCost">
       <span class="input-group-text">per km</span>
     </div>
 
     <div class="input-group mb-3">
       <span class="input-group-text">Additional Cost</span>
       <input type="number" class="form-control"
-             v-model.number="additional">
+             v-model.number="additionalCost">
     </div>
     <p><small class="text-muted">Additional costs are road tolls, parking fees etc. All amounts should be entered in
       your local currency.</small></p>
@@ -123,22 +122,44 @@
 
 <script>
 
+  const v = function (key, dv) {
+    const savedValue = localStorage.getItem(key)
+    if (typeof dv === 'number' && savedValue) return +savedValue
+    return savedValue || dv
+  }
+
+
   const app = Vue.createApp({
     data() {
       return {
-        km: 100,
-        kmpl: 13,
-        lpkm: 6.5,
-        cost_per_liter: 24.3,
-        running_cost: 0,
+        km: v('km', 100),
+        kmpl: v('kmpl', 13),
+        lpkm: v('lpkm', 6.5),
+        costPerLiter: v('costPerLiter', 24.3),
+        runningCost: v('runningCost', 0),
         routing: null, // the api response
         fromQuery: "",
         toQuery: "",
         loading: false,
-        additional: 0,
-        currency: 'ZAR',
-        economyFormat: 'kmpl',
+        additionalCost: 0,
+        currency: v('currency', 'ZAR'),
+        economyFormat: v('economyFormat', 'kmpl'),
       }
+    },
+    created() {
+      const keys = [
+        'kmpl',
+        'lpkm',
+        'costPerLiter',
+        'runningCost',
+        'currency',
+        'economyFormat',
+      ]
+      keys.forEach(key => {
+        this.$watch(key, (newVal) => {
+          localStorage.setItem(key, newVal)
+        })
+      })
     },
     computed: {
       economy() {
@@ -150,7 +171,7 @@
         return this.km / this.economy
       },
       total_cost() {
-        return (this.liters_consumed * this.cost_per_liter) + this.additional + (this.km * this.running_cost)
+        return (this.liters_consumed * this.costPerLiter) + this.additionalCost + (this.km * this.runningCost)
       },
       total_cost_display() {
         if (!this.currency) return this.total_cost.toFixed(2)
